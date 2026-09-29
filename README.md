@@ -1,10 +1,10 @@
 # Portfolio site
 
-The site that presents the five projects in this repository.
+The site that presents five engineering projects, each of which lives in its own
+repository. Cross-project documents are in [`docs/`](docs/).
 
 ```bash
-source ../tools/env.sh     # redirects the npm cache off the full root disk
-npm install
+npm ci
 npm run dev                # http://localhost:5173
 npm run build              # type-check, then bundle into dist/
 npm run preview            # serve the built output
@@ -25,14 +25,16 @@ which can be served by anything.
 | Asset | Raw | Gzipped | When it loads |
 |---|---:|---:|---|
 | `index.html` | 4.89 kB | 2.05 kB | always |
-| CSS | 40.53 kB | 8.46 kB | always |
+| CSS | 41.57 kB | 8.66 kB | always |
 | JS (entry) | 230.70 kB | 75.98 kB | always |
 | Inter Variable, latin | 47.1 kB | — | always (preloaded) |
 | Instrument Serif, latin | 20.5 kB | — | always (preloaded) |
 | JetBrains Mono Variable, latin | 39.5 kB | — | always |
 | `scene` chunk (three.js) | 478.45 kB | 121.10 kB | **desktop only, on demand** |
 
-58 modules. Measured cold, cache disabled: a phone transfers **192 kB over 6
+58 modules. Sizes above are from a fresh `npm ci` and build on 2026-09-29. The
+transfer figures that follow were measured just before the final CSS adjustment
+(about +0.2 kB gzipped) and were not re-measured. Measured cold, cache disabled: a phone transfers **192 kB over 6
 requests** and never fetches the 3D chunk; a desktop transfers **310 kB over 7
 requests**. First contentful paint over loopback is 136 ms on the phone profile
 and 68 ms on the desktop one. Cumulative layout shift is 0 in both cases.
@@ -157,8 +159,8 @@ Three things follow from the content rule and are worth knowing before editing:
 
 ## Links that do not exist yet
 
-This repository has no configured git remote, no LinkedIn reference and no
-committed resume PDF. Rather than guess at URLs, `src/data/profile.ts` holds
+When the site was built this repository had no git remote, and there is still
+no LinkedIn reference and no committed resume PDF. Rather than guess at URLs, `src/data/profile.ts` holds
 them as `null`, and the UI renders only the links that resolve — the contact
 section lists the others with the reason they are missing.
 
@@ -258,3 +260,11 @@ taken over loopback on a machine also running unrelated simulation jobs, with
 software rasterisation (SwiftShader) rather than a GPU, so the frame rate of
 the hero scene here is not representative of real hardware and no FPS figure is
 quoted. Viewport checks are emulated, not real devices.
+
+---
+
+## License
+
+No license has been selected for this repository yet, so no license file is
+included. The fonts and libraries the site depends on remain under their own
+licences.

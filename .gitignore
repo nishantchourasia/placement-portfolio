@@ -1,0 +1,27 @@
+# ---- Secrets: never commit ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*_rsa
+credentials.json
+secrets/
+
+# ---- Logs & OS/editor noise ----
+logs/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+# `tsc -b` emits JS/declaration siblings next to the TS config files
+vite.config.js
+vite.config.d.ts
