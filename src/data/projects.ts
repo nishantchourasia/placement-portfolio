@@ -173,7 +173,7 @@ export const projects: Project[] = [
     ],
     complete: false,
     statusNote:
-      "The export, parser, ingestion and validity reporting are done and tested. The research dashboard, methodology page and project README are not written yet.",
+      "The export, parser, ingestion and validity reporting are done and tested. The research dashboard and methodology page are not written yet.",
     detail: {
       problem:
         "A long-running gem5 sweep had produced a directory of simulator output: 82 finished runs across 8 last-level-cache compression schemes, 4 SPEC CPU2017 benchmarks and several core counts. Raw stats.txt files are not results. Turning them into something defensible means parsing them reproducibly, deciding which runs are actually valid, and being able to say why each excluded run was excluded — without touching the live sweep, which was still running and represented days of compute.",

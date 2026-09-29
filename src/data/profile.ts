@@ -30,12 +30,12 @@ export const profile = {
     degree: "M.Tech, Computer Science & Engineering",
     institution: "Indian Institute of Technology Jodhpur",
   },
-  email: "m25cse026@iitj.ac.in",
+  email: "m25cse020@iitj.ac.in",
 } as const;
 
 export const links: ProfileLink[] = [
-  { label: "Email", href: "mailto:m25cse026@iitj.ac.in" },
-  { label: "GitHub", href: null, pending: "Repository is local; no remote configured yet" },
+  { label: "Email", href: "mailto:m25cse020@iitj.ac.in" },
+  { label: "GitHub", href: "https://github.com/nishantchourasia" },
   { label: "LinkedIn", href: null, pending: "Not recorded in the repository" },
   { label: "Resume", href: null, pending: "No resume PDF committed yet" },
 ];
