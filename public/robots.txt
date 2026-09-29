@@ -1,0 +1,6 @@
+# Everything on this site is public and intended to be indexed.
+User-agent: *
+Allow: /
+
+# No Sitemap directive: a sitemap must list absolute URLs, and this site has no
+# domain yet. Add one at deploy time.

@@ -1,0 +1,110 @@
+/*
+ * Design tokens.
+ *
+ * Typography uses the platform font stack rather than a web font. A variable
+ * font would add a render-blocking network request and a flash of unstyled
+ * text for a site whose entire payload is otherwise under 200 kB; the
+ * monospace accents carry the technical character instead.
+ *
+ * Colour is functional. There is one accent, used for links and focus. The
+ * other hues exist only to distinguish evidence labels (measured / simulated /
+ * not yet measured), because that distinction is the point of the content.
+ */
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Type scale — 1.25 ratio, clamped so it reflows without media queries. */
+  --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.83rem);
+  --step-0: clamp(0.95rem, 0.92rem + 0.15vw, 1.02rem);
+  --step-1: clamp(1.12rem, 1.05rem + 0.35vw, 1.3rem);
+  --step-2: clamp(1.35rem, 1.2rem + 0.7vw, 1.75rem);
+  --step-3: clamp(1.7rem, 1.4rem + 1.4vw, 2.5rem);
+  --step-4: clamp(2.1rem, 1.5rem + 2.8vw, 3.9rem);
+
+  --measure: 68ch;
+  --page: 1120px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+  --space-9: 7rem;
+
+  /* Light: warm paper, blue-black ink. */
+  --paper: #fbfaf8;
+  --paper-2: #f4f2ee;
+  --ink: #16181d;
+  --ink-2: #4a4f59;
+  /* Chosen to clear WCAG AA (4.5:1) for small text against BOTH surfaces:
+     5.1:1 on --paper and 4.7:1 on --paper-2. The previous value looked fine
+     and measured 4.02:1, which is a fail — this is why it is measured. */
+  --ink-3: #666c78;
+  --rule: #e2ded7;
+  --rule-strong: #c9c4ba;
+  --accent: #1f4fd8;
+  --accent-soft: #eaeefc;
+
+  --ok: #1f6b45;
+  --ok-soft: #e6f2ea;
+  --sim: #5a3ea8;
+  --sim-soft: #eeeaf8;
+  --pending: #8a5a11;
+  --pending-soft: #f6efe2;
+
+  --radius: 3px;
+  --ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
+  --transition: 180ms cubic-bezier(0.2, 0, 0.3, 1);
+}
+
+/* Dark mode follows the system preference, and the manual toggle overrides it
+ * in either direction. The :root:not([data-theme="light"]) guard is what makes
+ * "force light on a dark OS" work. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #101216;
+    --paper-2: #171a20;
+    --ink: #eceef2;
+    --ink-2: #a8aeba;
+    --ink-3: #7b828f;
+    --rule: #262a32;
+    --rule-strong: #3a4049;
+    --accent: #8ba6ff;
+    --accent-soft: #1b2338;
+
+    --ok: #6fd39b;
+    --ok-soft: #14271d;
+    --sim: #b8a4f0;
+    --sim-soft: #1e1a2e;
+    --pending: #e0b667;
+    --pending-soft: #2a2115;
+
+    --ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #101216;
+  --paper-2: #171a20;
+  --ink: #eceef2;
+  --ink-2: #a8aeba;
+  --ink-3: #7b828f;
+  --rule: #262a32;
+  --rule-strong: #3a4049;
+  --accent: #8ba6ff;
+  --accent-soft: #1b2338;
+
+  --ok: #6fd39b;
+  --ok-soft: #14271d;
+  --sim: #b8a4f0;
+  --sim-soft: #1e1a2e;
+  --pending: #e0b667;
+  --pending-soft: #2a2115;
+}
