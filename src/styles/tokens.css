@@ -1,33 +1,54 @@
 /*
  * Design tokens.
  *
- * Typography uses the platform font stack rather than a web font. A variable
- * font would add a render-blocking network request and a flash of unstyled
- * text for a site whose entire payload is otherwise under 200 kB; the
- * monospace accents carry the technical character instead.
+ * The site is art-directed dark: a warm graphite base, light used as the
+ * primary emphasis, and exactly one interaction hue. A light theme is kept and
+ * fully specified, because removing it would remove verified accessibility
+ * work, but dark is the default rather than the OS preference — the design has
+ * a point of view and the toggle is one click away.
  *
- * Colour is functional. There is one accent, used for links and focus. The
- * other hues exist only to distinguish evidence labels (measured / simulated /
- * not yet measured), because that distinction is the point of the content.
+ * Colour is functional. One accent carries interaction (links, focus, active
+ * state). Three further hues exist only to separate evidence labels — measured,
+ * simulated, not yet measured — because that distinction is the content. There
+ * is deliberately no fourth hue and no gradient ramp.
+ *
+ * Every pairing used for text was measured against WCAG AA with the contrast
+ * script in this repository's verification pass, in both themes.
  */
 
 :root {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  /* ---- Families -------------------------------------------------------- */
+  /* Display is a high-contrast editorial serif; body is a neutral grotesk
+     with tabular figures; mono carries every technical label and number.
+     All three are self-hosted (see fonts.css) — no third-party request. */
+  --font-display: "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular",
+    "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
-  /* Type scale — 1.25 ratio, clamped so it reflows without media queries. */
-  --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.83rem);
-  --step-0: clamp(0.95rem, 0.92rem + 0.15vw, 1.02rem);
-  --step-1: clamp(1.12rem, 1.05rem + 0.35vw, 1.3rem);
-  --step-2: clamp(1.35rem, 1.2rem + 0.7vw, 1.75rem);
-  --step-3: clamp(1.7rem, 1.4rem + 1.4vw, 2.5rem);
-  --step-4: clamp(2.1rem, 1.5rem + 2.8vw, 3.9rem);
+  /* ---- Type scale ------------------------------------------------------ */
+  /* Fluid, clamped, no media queries. The display steps run further than the
+     text steps because the editorial hierarchy lives in the gap between them. */
+  --step--2: clamp(0.69rem, 0.67rem + 0.08vw, 0.74rem);
+  --step--1: clamp(0.79rem, 0.77rem + 0.1vw, 0.85rem);
+  --step-0: clamp(0.97rem, 0.94rem + 0.15vw, 1.05rem);
+  --step-1: clamp(1.13rem, 1.06rem + 0.34vw, 1.32rem);
+  --step-2: clamp(1.33rem, 1.19rem + 0.68vw, 1.74rem);
+  --step-3: clamp(1.62rem, 1.33rem + 1.4vw, 2.45rem);
+  --step-4: clamp(2.1rem, 1.55rem + 2.6vw, 3.7rem);
+  --step-5: clamp(2.7rem, 1.6rem + 5.2vw, 6.2rem);
 
-  --measure: 68ch;
-  --page: 1120px;
+  --leading-tight: 1.04;
+  --leading-snug: 1.22;
+  --leading-body: 1.68;
 
+  --measure: 66ch;
+  --measure-wide: 78ch;
+  --page: 1240px;
+  --gutter: clamp(1.15rem, 0.7rem + 2.2vw, 2.75rem);
+
+  /* ---- Space ----------------------------------------------------------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -37,74 +58,104 @@
   --space-7: 3rem;
   --space-8: 4.5rem;
   --space-9: 7rem;
+  --space-10: clamp(5rem, 3rem + 9vw, 11rem);
 
-  /* Light: warm paper, blue-black ink. */
-  --paper: #fbfaf8;
-  --paper-2: #f4f2ee;
-  --ink: #16181d;
-  --ink-2: #4a4f59;
-  /* Chosen to clear WCAG AA (4.5:1) for small text against BOTH surfaces:
-     5.1:1 on --paper and 4.7:1 on --paper-2. The previous value looked fine
-     and measured 4.02:1, which is a fail — this is why it is measured. */
-  --ink-3: #666c78;
-  --rule: #e2ded7;
-  --rule-strong: #c9c4ba;
-  --accent: #1f4fd8;
-  --accent-soft: #eaeefc;
+  --radius: 2px;
+  --radius-lg: 4px;
 
-  --ok: #1f6b45;
-  --ok-soft: #e6f2ea;
-  --sim: #5a3ea8;
-  --sim-soft: #eeeaf8;
-  --pending: #8a5a11;
-  --pending-soft: #f6efe2;
+  --transition: 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  --transition-slow: 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  --radius: 3px;
-  --ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
-  --transition: 180ms cubic-bezier(0.2, 0, 0.3, 1);
+  /* Hairline width that survives fractional device pixel ratios. */
+  --hairline: 1px;
 }
 
-/* Dark mode follows the system preference, and the manual toggle overrides it
- * in either direction. The :root:not([data-theme="light"]) guard is what makes
- * "force light on a dark OS" work. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #101216;
-    --paper-2: #171a20;
-    --ink: #eceef2;
-    --ink-2: #a8aeba;
-    --ink-3: #7b828f;
-    --rule: #262a32;
-    --rule-strong: #3a4049;
-    --accent: #8ba6ff;
-    --accent-soft: #1b2338;
-
-    --ok: #6fd39b;
-    --ok-soft: #14271d;
-    --sim: #b8a4f0;
-    --sim-soft: #1e1a2e;
-    --pending: #e0b667;
-    --pending-soft: #2a2115;
-
-    --ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
-  }
-}
-
+/* ---------------------------------------------------------------------- */
+/* Dark — the default. Warm graphite, bone-white ink, one brass accent.    */
+/* ---------------------------------------------------------------------- */
+:root,
 :root[data-theme="dark"] {
-  --paper: #101216;
-  --paper-2: #171a20;
-  --ink: #eceef2;
-  --ink-2: #a8aeba;
-  --ink-3: #7b828f;
-  --rule: #262a32;
-  --rule-strong: #3a4049;
-  --accent: #8ba6ff;
-  --accent-soft: #1b2338;
+  color-scheme: dark;
 
-  --ok: #6fd39b;
-  --ok-soft: #14271d;
-  --sim: #b8a4f0;
-  --sim-soft: #1e1a2e;
-  --pending: #e0b667;
-  --pending-soft: #2a2115;
+  --bg-0: #0b0a09;
+  --bg-1: #121110;
+  --bg-2: #191716;
+  --bg-3: #221f1d;
+
+  --ink-0: #f4f0ea;
+  --ink-1: #d9d3ca;
+  --ink-2: #a79f95;
+  /* 4.9:1 on --bg-0, 4.6:1 on --bg-2. The lowest-contrast text token, and the
+     one worth re-measuring after any palette change. */
+  --ink-3: #8b8279;
+
+  --rule: #262220;
+  --rule-strong: #3a3532;
+  /* The hero lattice's own material value. Separate from the surface tokens
+     because it is lit geometry, not a flat fill, and has to clear the page
+     it sits on by enough to read as an object. */
+  --scene-cell: #6a6158;
+  --scene-plate: #2b2723;
+
+  --accent: #e9b872;
+  --accent-ink: #120d06;
+  --accent-soft: #2a2015;
+  --accent-line: #6b5432;
+
+  --ev-measured: #93c4a4;
+  --ev-measured-soft: #14201a;
+  --ev-simulated: #9db8dc;
+  --ev-simulated-soft: #151c26;
+  --ev-pending: #a89f94;
+  --ev-pending-soft: #1c1a18;
+
+  /* Depth. Shadows on near-black read as a lift in the surface, not a drop. */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 18px 50px -24px rgba(0, 0, 0, 0.85);
+  --glow: 0 0 44px -12px rgba(233, 184, 114, 0.22);
+
+  --grain-opacity: 0.034;
+  --ring: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Light — warm paper. Kept fully specified, not an afterthought.          */
+/* ---------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-0: #fbf9f5;
+  --bg-1: #f5f2eb;
+  --bg-2: #efebe2;
+  --bg-3: #e7e2d7;
+
+  --ink-0: #15130f;
+  --ink-1: #2e2a25;
+  --ink-2: #514b43;
+  /* 4.8:1 on --bg-0, 4.5:1 on --bg-3 — the tightest pairing in this theme. */
+  --ink-3: #6a6359;
+
+  --rule: #e2ddd2;
+  --rule-strong: #c6bfb1;
+  --scene-cell: #b3aa9a;
+  --scene-plate: #d3ccbe;
+
+  --accent: #8a5510;
+  --accent-ink: #fffaf2;
+  --accent-soft: #f6eddd;
+  --accent-line: #d8c29b;
+
+  --ev-measured: #2b6544;
+  --ev-measured-soft: #e7f1e9;
+  --ev-simulated: #2f5280;
+  --ev-simulated-soft: #e8eef6;
+  --ev-pending: #665e53;
+  --ev-pending-soft: #efece5;
+
+  --shadow-1: 0 1px 2px rgba(40, 32, 20, 0.07);
+  --shadow-2: 0 18px 44px -28px rgba(40, 32, 20, 0.34);
+  --glow: none;
+
+  --grain-opacity: 0.02;
+  --ring: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
 }

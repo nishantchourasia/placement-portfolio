@@ -18,6 +18,11 @@ const TITLE: Record<Evidence, string> = {
  * The evidence label attached to every figure on this site. The repository
  * labels its own numbers this way, and reproducing that here is the difference
  * between quoting results and asserting them.
+ *
+ * The three labels are separated by hue, by the dot before them, and by the
+ * border style — "Not yet measured" is dashed and unhued, because it marks the
+ * absence of a result rather than a third kind of result. Colour is therefore
+ * never the only thing carrying the distinction.
  */
 export function Tag({ evidence }: { evidence: Evidence }) {
   return (

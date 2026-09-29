@@ -1,17 +1,20 @@
 import type { Stage } from "../data/projects";
 
 const BOX_W = 168;
-const BOX_H = 56;
-const GAP = 30;
-const PAD = 2;
+const BOX_H = 58;
+const GAP = 34;
+const PAD = 3;
 
 /**
  * A pipeline diagram, drawn as inline SVG from the project's stage list.
  *
  * Inline SVG rather than an image file: it costs no extra request, scales
  * without artefacts, inherits the theme's colours through CSS custom
- * properties (so it is correct in dark mode for free), and carries a real text
- * alternative for screen readers. A PNG would fail all four.
+ * properties (so it is correct in both themes for free), and carries a real
+ * text alternative for screen readers. A PNG would fail all four.
+ *
+ * The stages come from `src/data/projects.ts`, so a pipeline is corrected by
+ * editing the data rather than by editing a drawing.
  */
 export function Diagram({ stages, caption }: { stages: Stage[]; caption: string }) {
   const width = stages.length * BOX_W + (stages.length - 1) * GAP + PAD * 2;
@@ -51,12 +54,14 @@ export function Diagram({ stages, caption }: { stages: Stage[]; caption: string 
                 y={PAD}
                 width={BOX_W}
                 height={BOX_H}
-                rx="3"
+                rx="2"
                 className="diagram__box"
               />
+              {/* A short accent tick on the leading edge of each stage. */}
+              <rect x={x} y={PAD} width="2" height={BOX_H} className="diagram__tick" />
               <text
                 x={centre}
-                y={stage.sub ? PAD + 24 : PAD + 32}
+                y={stage.sub ? PAD + 25 : PAD + 34}
                 textAnchor="middle"
                 className="diagram__label"
               >
@@ -65,7 +70,7 @@ export function Diagram({ stages, caption }: { stages: Stage[]; caption: string 
               {stage.sub ? (
                 <text
                   x={centre}
-                  y={PAD + 40}
+                  y={PAD + 41}
                   textAnchor="middle"
                   className="diagram__sub"
                 >
@@ -74,9 +79,9 @@ export function Diagram({ stages, caption }: { stages: Stage[]; caption: string 
               ) : null}
               {index < stages.length - 1 ? (
                 <line
-                  x1={x + BOX_W + 5}
+                  x1={x + BOX_W + 6}
                   y1={PAD + BOX_H / 2}
-                  x2={x + BOX_W + GAP - 7}
+                  x2={x + BOX_W + GAP - 8}
                   y2={PAD + BOX_H / 2}
                   className="diagram__arrow"
                   markerEnd="url(#arrowhead)"
@@ -86,9 +91,7 @@ export function Diagram({ stages, caption }: { stages: Stage[]; caption: string 
           );
         })}
       </svg>
-      <figcaption className="metric__label" style={{ marginTop: "0.75rem" }}>
-        {caption}
-      </figcaption>
+      <figcaption className="diagram__caption">{caption}</figcaption>
     </figure>
   );
 }

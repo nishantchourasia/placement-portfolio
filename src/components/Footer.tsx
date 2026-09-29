@@ -3,7 +3,7 @@ import { profile } from "../data/profile";
 export function Footer() {
   return (
     <footer className="footer">
-      <div className="shell" style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", width: "100%" }}>
+      <div className="shell footer__inner">
         <span>
           {profile.name} — {profile.education.institution}
         </span>

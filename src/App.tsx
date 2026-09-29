@@ -7,13 +7,16 @@ import { NotFound } from "./pages/NotFound";
 import { projects } from "./data/projects";
 import { profile } from "./data/profile";
 import { useRoute } from "./lib/router";
-import { useDocumentMeta } from "./lib/hooks";
+import { useDocumentMeta, useActiveSection } from "./lib/hooks";
 
 const HOME_TITLE = `${profile.name} — ${profile.headline}`;
 const HOME_DESCRIPTION =
   "M.Tech CSE at IIT Jodhpur. Five engineering projects across systems (C++20), " +
   "computer architecture (gem5), machine learning, and production backends — with " +
   "every claim labelled by how it was measured.";
+
+/** The home page sections, in order, for the header's active state. */
+const HOME_SECTIONS = ["projects", "focus", "research", "about", "contact"];
 
 export function App() {
   const route = useRoute();
@@ -39,6 +42,13 @@ export function App() {
         : { title: `Not found — ${profile.name}`, description: HOME_DESCRIPTION };
 
   useDocumentMeta(meta.title, meta.description);
+
+  // Only the home page has sections to be inside; elsewhere the correct
+  // answer is "none", so the hook is given an empty list rather than being
+  // called conditionally.
+  const activeSection = useActiveSection(
+    route.kind === "home" ? HOME_SECTIONS : [],
+  );
 
   /**
    * Scroll is managed here rather than left to the browser. A hash change into
@@ -67,7 +77,7 @@ export function App() {
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <Header />
+      <Header active={activeSection} />
       <main id="main">
         {route.kind === "home" ? <Home /> : null}
         {route.kind === "project" && project ? <ProjectDetail project={project} /> : null}

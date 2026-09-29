@@ -4,7 +4,7 @@ import { Section } from "../components/Section";
 
 export function About() {
   return (
-    <Section id="about" eyebrow="About" title="Background and direction">
+    <Section id="about" index="04" eyebrow="About" title="Background and direction">
       <div className="two-col">
         <div className="prose">
           {about.paragraphs.map((paragraph) => (
@@ -24,7 +24,7 @@ export function About() {
           <div>
             <dt>Interests</dt>
             <dd>
-              <ul style={{ listStyle: "none", display: "grid", gap: "0.35rem" }}>
+              <ul>
                 {about.interests.map((interest) => (
                   <li key={interest}>{interest}</li>
                 ))}

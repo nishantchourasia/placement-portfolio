@@ -1,6 +1,11 @@
 import type { Metric as MetricData } from "../data/projects";
 import { Tag } from "./Tag";
 
+/**
+ * A figure with its evidence label. The label is never separated from the
+ * number it qualifies — same line, same component, no way to render one
+ * without the other.
+ */
 export function Metric({ metric }: { metric: MetricData }) {
   return (
     <div className="metric">

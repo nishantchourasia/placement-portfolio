@@ -1,0 +1,58 @@
+/*
+ * Self-hosted type.
+ *
+ * The previous version of this site shipped no web font, on the argument that
+ * a render-blocking request was not worth it for a ~72 kB page. The redesign
+ * changes that decision deliberately, and pays for it honestly:
+ *
+ *   - Three faces, latin subset only, ~107 kB of woff2 in total. The @font-face
+ *     rules are written by hand rather than importing the packages' own CSS,
+ *     which would have emitted every subset (cyrillic, greek, latin-ext) into
+ *     dist/ even though an English page never requests them.
+ *   - `font-display: swap`, so text paints immediately in the fallback and is
+ *     never invisible. The fallback stacks in tokens.css are metric-adjacent,
+ *     so the swap moves type rather than reflowing the page around it.
+ *   - The two faces used above the fold are preloaded from index.html.
+ *
+ * Nothing is fetched from a third party: no Google Fonts, no CDN, no DNS
+ * lookup a visitor did not ask for.
+ */
+
+/* Body and UI. Variable weight axis, so one file covers 400 through 700. */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Technical metadata: evidence labels, metrics, eyebrows, stack chips. */
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url("@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Display only — the name, section titles, project titles. One weight. */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2")
+    format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}

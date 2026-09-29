@@ -32,11 +32,38 @@
       content="Five engineering projects, documented with measured results and stated limitations."
     />
 
-    <!-- Theme colour per scheme, so the mobile browser chrome matches the page. -->
-    <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)" />
+    <!--
+      One theme-color, not one per scheme: the site defaults to dark whatever
+      the OS prefers, and the toggle rewrites this tag when the visitor
+      chooses otherwise.
+    -->
+    <meta name="theme-color" content="#0b0a09" />
 
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+
+    <!--
+      Apply a stored theme before first paint.
+
+      Without this, a visitor who chose light loads the dark default and is
+      repainted once React mounts — a flash on every navigation. Inline and
+      synchronous is the only placement that runs early enough to prevent it,
+      and the whole thing is wrapped in try/catch because localStorage throws
+      outright in a private window with site data blocked.
+    -->
+    <script>
+      (function () {
+        var theme = "dark";
+        try {
+          var stored = localStorage.getItem("portfolio-theme");
+          if (stored === "light" || stored === "dark") theme = stored;
+        } catch (e) {}
+        document.documentElement.setAttribute("data-theme", theme);
+        if (theme === "light") {
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", "#fbf9f5");
+        }
+      })();
+    </script>
 
     <script type="application/ld+json">
       {
