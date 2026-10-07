@@ -7,6 +7,7 @@ const NAV = [
   { label: "Focus", id: "focus" },
   { label: "Research", id: "research" },
   { label: "About", id: "about" },
+  { label: "Gallery", id: "gallery" },
   { label: "Contact", id: "contact" },
 ];
 

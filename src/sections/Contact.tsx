@@ -31,7 +31,7 @@ export function Contact() {
   }
 
   return (
-    <Section id="contact" index="05" eyebrow="Contact" title="Get In Touch"
+    <Section id="contact" index="06" eyebrow="Contact" title="Get In Touch"
       lede="Feel free to reach out if you'd like to discuss systems, computer architecture, AI/ML, software engineering, or any of the projects on this site.">
       <div className="contact">
         <div className="contact__info" aria-labelledby="contact-info-title">

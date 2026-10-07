@@ -3062,3 +3062,19 @@ a.contact__card:hover {
 }
 @keyframes case-title-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 #main:focus { box-shadow: none; }
+
+/* Certificate originals stay fully visible in both themes. */
+.certificate-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.certificate-card { display: block; min-width: 0; overflow: hidden; color: var(--ink-0); background: var(--bg-1); border: 1px solid var(--rule-strong); border-radius: var(--radius-lg); text-decoration: none; transition: border-color var(--transition), box-shadow var(--transition); }
+.certificate-card:hover { border-color: var(--accent-line); box-shadow: var(--shadow-2); }
+.certificate-card__image { aspect-ratio: 3 / 2; display: flex; align-items: center; justify-content: center; background: #fff; padding: var(--space-3); border-bottom: 1px solid var(--rule); }
+.certificate-card__image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.certificate-card--portrait { width: 100%; max-width: 26rem; }
+.certificate-card__image--portrait { aspect-ratio: 3 / 4; background: var(--bg-2); }
+.certificate-card__body { padding: var(--space-5); }
+.certificate-card__meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--step--2); color: var(--ink-2); margin-bottom: var(--space-4); }
+.certificate-card__meta span:first-child { color: var(--accent); }
+.certificate-card h3 { font-family: var(--font-display); font-size: var(--step-2); font-weight: 400; line-height: var(--leading-snug); margin-bottom: var(--space-3); }
+.certificate-card__body > p:not(.certificate-card__meta) { color: var(--ink-2); font-size: var(--step--1); }
+.certificate-card__action { display: inline-flex; align-items: center; gap: var(--space-3); margin-top: var(--space-5); font-size: var(--step--1); color: var(--accent); }
+@media (max-width: 700px) { .certificate-gallery { grid-template-columns: minmax(0, 1fr); } }

@@ -4,6 +4,7 @@ import { Focus } from "../sections/Focus";
 import { Research } from "../sections/Research";
 import { About } from "../sections/About";
 import { Contact } from "../sections/Contact";
+import { Gallery } from "../sections/Gallery";
 
 export function Home() {
   return (
@@ -13,6 +14,7 @@ export function Home() {
       <Focus />
       <Research />
       <About />
+      <Gallery />
       <Contact />
     </>
   );

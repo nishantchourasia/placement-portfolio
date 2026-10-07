@@ -16,7 +16,7 @@ const HOME_DESCRIPTION =
   "every claim labelled by how it was measured.";
 
 /** The home page sections, in order, for the header's active state. */
-const HOME_SECTIONS = ["projects", "focus", "research", "about", "contact"];
+const HOME_SECTIONS = ["projects", "focus", "research", "about", "gallery", "contact"];
 
 export function App() {
   const route = useRoute();
