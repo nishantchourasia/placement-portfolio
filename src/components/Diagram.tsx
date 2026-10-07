@@ -1,96 +1,18 @@
-import type { Stage } from "../data/projects";
+﻿import type { Stage } from "../data/projects";
 
-const BOX_W = 168;
-const BOX_H = 58;
-const GAP = 34;
-const PAD = 3;
-
-/**
- * A pipeline diagram, drawn as inline SVG from the project's stage list.
- *
- * Inline SVG rather than an image file: it costs no extra request, scales
- * without artefacts, inherits the theme's colours through CSS custom
- * properties (so it is correct in both themes for free), and carries a real
- * text alternative for screen readers. A PNG would fail all four.
- *
- * The stages come from `src/data/projects.ts`, so a pipeline is corrected by
- * editing the data rather than by editing a drawing.
- */
+/** Text-first architecture nodes reflow instead of shrinking SVG labels. */
 export function Diagram({ stages, caption }: { stages: Stage[]; caption: string }) {
-  const width = stages.length * BOX_W + (stages.length - 1) * GAP + PAD * 2;
-  const height = BOX_H + PAD * 2;
-  const description = stages
-    .map((stage) => (stage.sub ? `${stage.label} (${stage.sub})` : stage.label))
-    .join(" → ");
-
   return (
-    <figure className="diagram">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-label={`${caption}: ${description}`}
-      >
-        <defs>
-          <marker
-            id="arrowhead"
-            viewBox="0 0 8 8"
-            refX="7"
-            refY="4"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto"
-          >
-            <path d="M0,0 L8,4 L0,8 z" className="diagram__arrowhead" />
-          </marker>
-        </defs>
-
-        {stages.map((stage, index) => {
-          const x = PAD + index * (BOX_W + GAP);
-          const centre = x + BOX_W / 2;
-          return (
-            <g key={stage.label}>
-              <rect
-                x={x}
-                y={PAD}
-                width={BOX_W}
-                height={BOX_H}
-                rx="2"
-                className="diagram__box"
-              />
-              {/* A short accent tick on the leading edge of each stage. */}
-              <rect x={x} y={PAD} width="2" height={BOX_H} className="diagram__tick" />
-              <text
-                x={centre}
-                y={stage.sub ? PAD + 25 : PAD + 34}
-                textAnchor="middle"
-                className="diagram__label"
-              >
-                {stage.label}
-              </text>
-              {stage.sub ? (
-                <text
-                  x={centre}
-                  y={PAD + 41}
-                  textAnchor="middle"
-                  className="diagram__sub"
-                >
-                  {stage.sub}
-                </text>
-              ) : null}
-              {index < stages.length - 1 ? (
-                <line
-                  x1={x + BOX_W + 6}
-                  y1={PAD + BOX_H / 2}
-                  x2={x + BOX_W + GAP - 8}
-                  y2={PAD + BOX_H / 2}
-                  className="diagram__arrow"
-                  markerEnd="url(#arrowhead)"
-                />
-              ) : null}
-            </g>
-          );
-        })}
-      </svg>
+    <figure className="diagram pipeline">
+      <ol className="pipeline__nodes" aria-label={caption}>
+        {stages.map((stage, index) => (
+          <li className="pipeline__node" key={stage.label} style={{ "--node-index": index } as React.CSSProperties}>
+            <span className="pipeline__ordinal" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+            <span className="pipeline__label">{stage.label}</span>
+            {stage.sub ? <span className="pipeline__sub">{stage.sub}</span> : null}
+          </li>
+        ))}
+      </ol>
       <figcaption className="diagram__caption">{caption}</figcaption>
     </figure>
   );

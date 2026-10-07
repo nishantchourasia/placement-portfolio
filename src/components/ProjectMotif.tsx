@@ -416,6 +416,14 @@ function CampusFlow() {
 }
 
 const MOTIFS: Record<string, () => JSX.Element> = {
+  "hardware-prefetcher": () => <>
+    {["A", "B", "C", "D", "?"].map((label, index) => <g key={label}>
+      <rect x={6 + index * 30} y={28} width={24} height={28} className={index === 4 ? "motif__cell motif__cell--hot" : "motif__cell"} />
+      <text x={18 + index * 30} y={46} textAnchor="middle" className="motif__label">{label}</text>
+    </g>)}
+    <path d="M 10 72 L 144 72" className="motif__line--faint" />
+    <text x={10} y={90} className="motif__label">conceptual access stream</text>
+  </>,
   swiftkv: SwiftKV,
   cachelab: CacheLab,
   resumelens: ResumeLens,

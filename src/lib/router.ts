@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 export type Route =
   /** `anchor` is set when the visitor asked for a specific section. */
   | { kind: "home"; anchor?: string }
-  | { kind: "project"; slug: string }
+  | { kind: "project"; slug: string; anchor?: string }
   | { kind: "notfound"; path: string };
 
 export function parse(hash: string): Route {
@@ -36,8 +36,12 @@ export function parse(hash: string): Route {
   const path = raw.replace(/^\/+|\/+$/g, "");
   if (path === "" || path.startsWith("#")) return { kind: "home" };
 
-  const project = /^projects\/([a-z0-9-]+)$/.exec(path);
-  if (project && project[1]) return { kind: "project", slug: project[1] };
+  const project = /^projects\/([a-z0-9-]+)(?:\/([a-z-]+))?$/.exec(path);
+  if (project && project[1]) return {
+    kind: "project",
+    slug: project[1] === "cache-compression" ? "cachelab" : project[1],
+    ...(project[2] ? { anchor: project[2] } : {}),
+  };
 
   // Resolving a bare anchor here is what lets the header nav work from a
   // project page, where the target section is not in the DOM to scroll to.
@@ -50,9 +54,29 @@ export function useRoute(): Route {
   const [route, setRoute] = useState<Route>(() => parse(window.location.hash));
 
   useEffect(() => {
-    const onChange = () => setRoute(parse(window.location.hash));
+    // Native fragment links to mounted content (e.g. the skip link) must not
+    // be interpreted as a request to unmount the current project.
+    const onChange = () => {
+      const hash = window.location.hash;
+      const id = hash.replace(/^#/, "");
+      if (!hash.startsWith("#/") && id && document.getElementById(id)) return;
+      setRoute(parse(hash));
+    };
+    const onClick = (event: MouseEvent) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest("a") : null;
+      const target = link?.getAttribute("href");
+      if (target?.startsWith("#/") && target === window.location.hash) {
+        event.preventDefault();
+        setRoute(parse(target));
+      }
+    };
     window.addEventListener("hashchange", onChange);
-    return () => window.removeEventListener("hashchange", onChange);
+    document.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("hashchange", onChange);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
 
   return route;
@@ -61,5 +85,6 @@ export function useRoute(): Route {
 export const href = {
   home: "#/",
   section: (id: string) => `#${id}`,
-  project: (slug: string) => `#/projects/${slug}`,
+  project: (slug: string, anchor?: string) =>
+    `#/projects/${slug === "cachelab" ? "cache-compression" : slug}${anchor ? `/${anchor}` : ""}`,
 };

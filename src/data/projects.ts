@@ -1,11 +1,13 @@
 /**
  * Project content.
  *
- * Every figure here was copied from the repository's own generated results or
+ * Recorded figures come from the repository's generated results and documentation or
  * PROJECT_STATUS.md, which is the single source of truth for what is finished.
  * Where the two disagreed, PROJECT_STATUS won. Nothing is rounded up, and
  * nothing that has not been run appears as a number.
  */
+
+import { caseStudies, type CaseStudy } from "./caseStudies";
 
 export type Evidence = "Measured" | "Simulated" | "Predicted" | "Not yet measured";
 
@@ -33,6 +35,7 @@ export interface Stage {
 }
 
 export interface Project {
+  caseStudy: CaseStudy;
   slug: string;
   name: string;
   domain: string;
@@ -61,7 +64,7 @@ export interface Project {
   };
 }
 
-export const projects: Project[] = [
+const projectRecords: Omit<Project, "caseStudy">[] = [
   {
     slug: "swiftkv",
     name: "SwiftKV",
@@ -143,24 +146,25 @@ export const projects: Project[] = [
       ],
       limitations: [
         "Single node — no cluster and no replication. The log format is designed for it, but it is not built.",
+        "The timing-sensitive byte counters move test is unresolved. The README records failures under heavy load; its original successful suite run is a historical result, not a guarantee of repeatability.",
         "No authentication and no TLS; intended to bind to localhost.",
         "No TTL or expiry, no data types beyond strings, no transactions, no pub/sub.",
         "Benchmarks are loopback-only, on a shared machine also running gem5 jobs. Real numbers, not a clean lab.",
         "fsync is not proof against a power cut — a drive with a volatile write cache can acknowledge early. Testing that needs hardware this project does not have.",
-        "Docker configuration is written but never built: no Docker daemon access on this machine.",
+        "Docker image and Compose setup are verified locally with healthchecks and persistent storage. Production deployment and multi-node orchestration are not implemented.",
       ],
     },
   },
   {
     slug: "cachelab",
-    name: "CacheLab",
+    name: "Cache Compression",
     domain: "Computer Architecture · gem5",
     question: "Can I perform real computer architecture research and evaluate systems experimentally?",
     tagline:
       "A reproducible pipeline that turns 82 gem5 last-level-cache compression runs on SPEC CPU2017 into a validated dataset — with every exclusion justified in public.",
     built:
       "A one-way export from a live gem5 research tree, a stats.txt parser, an ingestion pipeline and a validity classifier that decides which runs may be used and publishes the reason for each rejection. The source tree is treated as read-only and verified byte-identical after every export.",
-    stack: ["Python", "gem5", "SPEC CPU2017", "pandas", "pytest", "HyComp"],
+    stack: ["Python", "gem5 (external)", "SPEC CPU2017", "pytest", "CSV / SHA-256"],
     highlights: [
       "8 compression schemes x 4 SPEC benchmarks x 2/4/8 cores, from real simulator output",
       "10 of 82 runs excluded with published reasons — reproduced from raw stats, not copied",
@@ -236,19 +240,126 @@ export const projects: Project[] = [
     },
   },
   {
+    slug: "campusflow",
+    name: "CampusFlow",
+    domain: "Backend · Security · Concurrency",
+    question: "Can I build a production-style system correctly?",
+    tagline:
+      "A campus platform where the adversary is an authenticated insider — every student already has a valid token, so authorization is the whole problem.",
+    built:
+      "A modular monolith on FastAPI and PostgreSQL: 12 tables with invariants enforced in the database, a declarative permission matrix plus per-record scope checks, transactional enrollment that survives a reproduced capacity race, a transactional-outbox job queue, and Redis-backed rate limiting and caching.",
+    stack: ["FastAPI", "PostgreSQL 18.6", "Redis 8.10.1", "React", "TypeScript", "psycopg", "JWT", "scrypt", "k6", "pytest"],
+    highlights: [
+      "Races are reproduced, not asserted — including negative controls that prove the race is real",
+      "Role and active status re-read from PostgreSQL every request, so a demotion is immediate",
+      "Tests found a real schema bug: SQL trim() strips only spaces",
+    ],
+    headline: [
+      { label: "Tests", value: "284 passed, 1 skipped", evidence: "Measured", note: "Real PostgreSQL 18.6 and Redis 8.10.1" },
+      { label: "Capacity race", value: "40 students, 10 seats → exactly 10", evidence: "Measured" },
+      { label: "Database invariants", value: "8 triggers, 39 indexes, 22 CHECKs", evidence: "Measured" },
+    ],
+    complete: true,
+    statusNote:
+      "Docker images and the local Compose stack are built and verified: portal login, submission, grading, role restrictions and persistent database storage. Production deployment is not verified.",
+    detail: {
+      problem:
+        "A campus system is not interesting because it has logins. It is interesting because everyone using it is authenticated, and the rules are about relationships: a student may read their own submission and no one else's, a faculty member may grade only in courses they teach, attendance may be recorded only for enrolled students, and a 60-seat course must never hold 61 enrollments no matter how the requests interleave. Those are authorization and concurrency problems, and both fail quietly.",
+      approach:
+        "Authorization is split into two questions that are usually conflated. A declarative matrix answers \"may this role do this kind of thing?\"; database-backed scope checks answer \"may this actor do it to this record?\" — and those checks take an open connection, so the check and the write share one transaction. Invariants live in the database as UNIQUE constraints, CHECK constraints and PL/pgSQL triggers, so a future import script or a psql session cannot violate them either. Capacity is protected by SELECT ... FOR UPDATE on the course row; background work is a transactional outbox claimed with FOR UPDATE SKIP LOCKED.",
+      stages: [
+        { label: "React / TS", sub: "not a boundary" },
+        { label: "FastAPI", sub: "validate, rate limit" },
+        { label: "Authz", sub: "matrix + scope" },
+        { label: "Services", sub: "transactions" },
+        { label: "PostgreSQL", sub: "triggers, constraints" },
+        { label: "Worker", sub: "SKIP LOCKED outbox" },
+      ],
+      decisions: [
+        {
+          title: "The token proves identity; the database provides authority",
+          body:
+            "Role and is_active are re-read from PostgreSQL on every request rather than trusted from the JWT. This costs a query per request — and the load measurements show it is the single largest component of per-request work — but it means demoting or disabling an account takes effect on the very next request, despite stateless tokens. The test that justifies it signs a token with the real key and a tampered role claim: correctly signed, claims admin, and gains nothing, because the database says student. Caching that lookup would convert a stale role into a privilege escalation, which is why the catalog is cached and authorization data never is.",
+        },
+        {
+          title: "Two negative controls, which assert that a bug exists",
+          body:
+            "The two most valuable tests in the project deliberately remove the protection and assert the race happens. One reimplements enrollment without FOR UPDATE and asserts capacity is exceeded; its failure message says that if capacity held, the threads probably never overlapped and the positive test is vacuous. The other runs 30 unlocked threads inserting the same row and asserts the UNIQUE constraint alone admits exactly one, isolating the constraint from the lock. Without these, a passing race test proves only that nothing was concurrent.",
+        },
+        {
+          title: "404 for both \"does not exist\" and \"exists, but not yours\"",
+          body:
+            "If a forbidden record returns 403 while a missing one returns 404, the API is an oracle for which ids exist, and sequential ids make that a directory of other people's data. Both cases raise the same error, and a test asserts the two responses are identical after id substitution. Several other tests go further and assert the database is unchanged after a refusal, because a 403 with a mutated row is still a breach.",
+        },
+        {
+          title: "Each concurrency mechanism is chosen for a specific reason",
+          body:
+            "A UNIQUE constraint handles duplicate enrollment, because there is a single row to arbitrate and no lock is needed. FOR UPDATE on the course row handles capacity, because the invariant spans many rows and so cannot be expressed as a constraint. FOR UPDATE SKIP LOCKED drives the job queue, so N workers do not serialise behind one another. Submission attempt numbers use optimistic retry, because there is no row to lock before the first insert exists. All of them are correct at READ COMMITTED, since FOR UPDATE re-reads the row when the lock is acquired.",
+        },
+      ],
+      results: [
+        { label: "Test suite", value: "284 passed, 1 skipped, 27.8 s", evidence: "Measured", note: "Real PostgreSQL 18.6 and Redis 8.10.1 — never SQLite, never mocked" },
+        { label: "Authorization tests", value: "54 model + 69 API security", evidence: "Measured" },
+        { label: "Concurrency tests", value: "12 / 12, including 2 negative controls", evidence: "Measured" },
+        { label: "Schema", value: "12 tables, 8 triggers, 39 indexes, 22 CHECK constraints", evidence: "Measured" },
+        { label: "Threat model", value: "15 threats, each naming the test that checks it", evidence: "Measured", note: "Written before the authentication code" },
+        { label: "50 concurrent enrollments, one student", value: "1 enrollment — 1 success, 49 conflicts", evidence: "Measured" },
+        { label: "40 students into 10 seats", value: "exactly 10 enrolled, 30 refused", evidence: "Measured" },
+        { label: "Negative control, FOR UPDATE removed", value: "over-capacity — the race is real", evidence: "Measured" },
+        { label: "30 unlocked threads, constraint only", value: "1 row, 29 UniqueViolations", evidence: "Measured" },
+        { label: "12 concurrent HTTP enrollments, 2 seats", value: "2 × 201, 10 × 409", evidence: "Measured" },
+        { label: "8 workers, 8 queued jobs", value: "each job delivered exactly once", evidence: "Measured" },
+        { label: "Latency, 1 VU", value: "p50 2.20 ms", evidence: "Measured", note: "Single uvicorn worker, loopback, shared machine" },
+        { label: "Latency, 50 VUs", value: "p50 110 ms, throughput flat at ~430 rps", evidence: "Measured" },
+        { label: "Worker scaling", value: "1 → 409 rps, 2 → 811, 4 → 825, 8 → 824", evidence: "Measured" },
+        { label: "Per-endpoint ceiling", value: "/health 1373 rps, /api/auth/me 1004, /api/courses 839", evidence: "Measured", note: "Locates the plateau in per-request work, not worker count" },
+        { label: "Frontend bundle", value: "189 kB JS, 57 kB gzipped, clean under strict TypeScript", evidence: "Measured" },
+        { label: "Accepted risks", value: "10, listed with their fixes", evidence: "Measured" },
+      ],
+      challenges: [
+        {
+          title: "A schema check that looked obviously correct and was not",
+          body:
+            "Every \"content is present\" constraint was length(trim(content)) > 0. SQL's trim() strips only spaces, so a submission of newline-tab-space trimmed to length 2 and passed. All six \"not blank\" columns had the same flaw. It was found only because test_constraints.py writes raw SQL directly to PostgreSQL, bypassing Pydantic — going through the API would merely have proved the API checks the rule. The checks are now CHECK (x ~ '[^[:space:]]'), with one test covering all six columns, because a fix applied to one column and not its siblings is the usual outcome.",
+        },
+        {
+          title: "Diagnosing a throughput plateau in three stages",
+          body:
+            "Flat throughput with linearly growing latency indicated a single-threaded server, and adding a worker confirmed it: 409 to 811 rps. But 2 to 8 workers changed nothing, so the bottleneck had moved. Probing per endpoint located it in per-request work — /health reaches 1373 rps, /api/auth/me 1004, /api/courses 839 — and the largest single item is the actor lookup that makes revocation immediate. The honest conclusion is a tension rather than a fix: caching it with a TTL would turn a stale role into a privilege escalation.",
+        },
+        {
+          title: "A load test that measured the wrong thing entirely",
+          body:
+            "The first k6 script logged in on every iteration, so it was measuring scrypt at roughly 100 ms per hash and then tripping the login rate limiter — 96.83% of requests failed while 100% of the script's own checks passed. The fix was a per-VU token cache, and the bug is written into the file's comments rather than quietly corrected, because a load test that measures its own setup is a mistake worth recognising twice.",
+        },
+      ],
+      limitations: [
+        "Docker Compose is verified locally with PostgreSQL, Redis, API, worker and frontend. Production operations, backups and multi-host orchestration are not verified.",
+        "No CI.",
+        "A token cannot be revoked before its 30-minute expiry, though disabling an account is immediate.",
+        "Without Redis the rate limiter is per process and permits N× the limit across N instances — reported at /health rather than glossed over.",
+        "Offset pagination, capped at page 1000.",
+        "No timetabling — deliberately out of scope, since a shallow version would have diluted what is done properly.",
+        "No password reset, 2FA, file uploads or encryption at rest; recorded as accepted risks.",
+        "Load figures are loopback on a machine shared with unrelated simulation jobs, so they exclude network latency and are noisier than a dedicated host.",
+        "The frontend has no tests; it is typed and builds clean, but it is deliberately not a security boundary.",
+      ],
+    },
+  },
+  {
     slug: "resumelens",
     name: "ResumeLens",
     domain: "Full-stack · AI Engineering",
     question: "Can I build an AI-enabled product that is more than a prompt wrapper?",
     tagline:
-      "Resume-to-job matching where the score is computed deterministically and the language model only explains it — which is also what makes prompt injection structurally useless.",
+      "Resume-to-job matching where the score is computed deterministically and the language model only explains it — with the stored score isolated from model commentary.",
     built:
       "A FastAPI and PostgreSQL backend with authentication, per-user isolation enforced in SQL, hardened PDF ingestion, a deterministic parsing and scoring pipeline, and an optional LLM commentary layer. A React and TypeScript frontend for upload, results and history.",
     stack: ["FastAPI", "PostgreSQL", "React", "TypeScript", "Tailwind", "scrypt", "pytest", "pypdf"],
     highlights: [
       "Found and fixed a real compression-bomb denial of service — 4.8 s of CPU from a 13.5 KB file",
       "Prompt injection defeated architecturally: the score is stored before the model is called",
-      "Ownership lives in the SQL WHERE clause, so a forgotten check cannot leak another user's data",
+      "Ownership lives in the SQL WHERE clause, so user-owned reads are filtered at the query boundary",
     ],
     headline: [
       { label: "Tests", value: "119 against live PostgreSQL 18.6", evidence: "Measured" },
@@ -280,7 +391,7 @@ export const projects: Project[] = [
         {
           title: "Ownership in the WHERE clause, and 404 rather than 403",
           body:
-            "Filtering by owner in the query means a missing check cannot return another user's row — there is no code path that fetches first and authorizes afterwards. Non-owners get 404, not 403, because 403 confirms the record exists and turns sequential ids into a census of other users' data. 21 tests cover this, including IDOR attempts and enumeration, and they were re-run against live PostgreSQL rather than only SQLite.",
+            "Filtering by owner in the query means a missing check cannot return another user's row — there is no code path that fetches first and authorizes afterwards. Non-owners get 404, not 403, because a different response would reveal that another user's analysis exists. 21 tests cover this, including IDOR attempts and enumeration, and they were re-run against live PostgreSQL rather than only SQLite.",
         },
         {
           title: "Measure the cheap thing before doing the expensive thing",
@@ -375,7 +486,7 @@ export const projects: Project[] = [
         },
       ],
       results: [
-        { label: "Dataset", value: "241,600 measured configurations, SHA-256 verified on fetch", evidence: "Measured" },
+        { label: "Dataset", value: "241,600 UCI dataset rows, SHA-256 verified on fetch", evidence: "Measured" },
         { label: "Measurement noise floor", value: "MAE(log) ≥ 0.0053, R² ≤ 0.99990", evidence: "Measured", note: "From the 4 repeats per configuration" },
         { label: "Deployed model", value: "test MAE(log) 0.0205, R² 0.9993, median relative error 1.34%", evidence: "Measured" },
         { label: "Distance from the floor", value: "3.8x — not noise-limited", evidence: "Measured" },
@@ -412,111 +523,33 @@ export const projects: Project[] = [
       ],
     },
   },
-  {
-    slug: "campusflow",
-    name: "CampusFlow",
-    domain: "Backend · Security · Concurrency",
-    question: "Can I build a production-style system correctly?",
-    tagline:
-      "A campus platform where the adversary is an authenticated insider — every student already has a valid token, so authorization is the whole problem.",
-    built:
-      "A modular monolith on FastAPI and PostgreSQL: 12 tables with invariants enforced in the database, a declarative permission matrix plus per-record scope checks, transactional enrollment that survives a reproduced capacity race, a transactional-outbox job queue, and Redis-backed rate limiting and caching.",
-    stack: ["FastAPI", "PostgreSQL 18.6", "Redis 8.10.1", "React", "TypeScript", "psycopg", "JWT", "scrypt", "k6", "pytest"],
-    highlights: [
-      "Races are reproduced, not asserted — including negative controls that prove the race is real",
-      "Role and active status re-read from PostgreSQL every request, so a demotion is immediate",
-      "Tests found a real schema bug: SQL trim() strips only spaces",
-    ],
-    headline: [
-      { label: "Tests", value: "284 passed, 1 skipped", evidence: "Measured", note: "Real PostgreSQL 18.6 and Redis 8.10.1" },
-      { label: "Capacity race", value: "40 students, 10 seats → exactly 10", evidence: "Measured" },
-      { label: "Database invariants", value: "8 triggers, 39 indexes, 22 CHECKs", evidence: "Measured" },
-    ],
-    complete: true,
-    statusNote:
-      "Docker is written but never built — this machine has no Docker daemon access, verified by docker ps returning permission denied. It is not claimed to work.",
-    detail: {
-      problem:
-        "A campus system is not interesting because it has logins. It is interesting because everyone using it is authenticated, and the rules are about relationships: a student may read their own submission and no one else's, a faculty member may grade only in courses they teach, attendance may be recorded only for enrolled students, and a 60-seat course must never hold 61 enrollments no matter how the requests interleave. Those are authorization and concurrency problems, and both fail quietly.",
-      approach:
-        "Authorization is split into two questions that are usually conflated. A declarative matrix answers \"may this role do this kind of thing?\"; database-backed scope checks answer \"may this actor do it to this record?\" — and those checks take an open connection, so the check and the write share one transaction. Invariants live in the database as UNIQUE constraints, CHECK constraints and PL/pgSQL triggers, so a future import script or a psql session cannot violate them either. Capacity is protected by SELECT ... FOR UPDATE on the course row; background work is a transactional outbox claimed with FOR UPDATE SKIP LOCKED.",
-      stages: [
-        { label: "React / TS", sub: "not a boundary" },
-        { label: "FastAPI", sub: "validate, rate limit" },
-        { label: "Authz", sub: "matrix + scope" },
-        { label: "Services", sub: "transactions" },
-        { label: "PostgreSQL", sub: "triggers, constraints" },
-        { label: "Worker", sub: "SKIP LOCKED outbox" },
-      ],
-      decisions: [
-        {
-          title: "The token proves identity; the database provides authority",
-          body:
-            "Role and is_active are re-read from PostgreSQL on every request rather than trusted from the JWT. This costs a query per request — and the load measurements show it is the single largest component of per-request work — but it means demoting or disabling an account takes effect on the very next request, despite stateless tokens. The test that justifies it signs a token with the real key and a tampered role claim: correctly signed, claims admin, and gains nothing, because the database says student. Caching that lookup would convert a stale role into a privilege escalation, which is why the catalog is cached and authorization data never is.",
-        },
-        {
-          title: "Two negative controls, which assert that a bug exists",
-          body:
-            "The two most valuable tests in the project deliberately remove the protection and assert the race happens. One reimplements enrollment without FOR UPDATE and asserts capacity is exceeded; its failure message says that if capacity held, the threads probably never overlapped and the positive test is vacuous. The other runs 30 unlocked threads inserting the same row and asserts the UNIQUE constraint alone admits exactly one, isolating the constraint from the lock. Without these, a passing race test proves only that nothing was concurrent.",
-        },
-        {
-          title: "404 for both \"does not exist\" and \"exists, but not yours\"",
-          body:
-            "If a forbidden record returns 403 while a missing one returns 404, the API is an oracle for which ids exist, and sequential ids make that a directory of other people's data. Both cases raise the same error, and a test asserts the two responses are identical after id substitution. Several other tests go further and assert the database is unchanged after a refusal, because a 403 with a mutated row is still a breach.",
-        },
-        {
-          title: "Each concurrency mechanism is chosen for a specific reason",
-          body:
-            "A UNIQUE constraint handles duplicate enrollment, because there is a single row to arbitrate and no lock is needed. FOR UPDATE on the course row handles capacity, because the invariant spans many rows and so cannot be expressed as a constraint. FOR UPDATE SKIP LOCKED drives the job queue, so N workers do not serialise behind one another. Submission attempt numbers use optimistic retry, because there is no row to lock before the first insert exists. All of them are correct at READ COMMITTED, since FOR UPDATE re-reads the row when the lock is acquired.",
-        },
-      ],
-      results: [
-        { label: "Test suite", value: "284 passed, 1 skipped, 27.8 s", evidence: "Measured", note: "Real PostgreSQL 18.6 and Redis 8.10.1 — never SQLite, never mocked" },
-        { label: "Authorization tests", value: "54 model + 69 API security", evidence: "Measured" },
-        { label: "Concurrency tests", value: "12 / 12, including 2 negative controls", evidence: "Measured" },
-        { label: "Schema", value: "12 tables, 8 triggers, 39 indexes, 22 CHECK constraints", evidence: "Measured" },
-        { label: "Threat model", value: "15 threats, each naming the test that checks it", evidence: "Measured", note: "Written before the authentication code" },
-        { label: "50 concurrent enrollments, one student", value: "1 enrollment — 1 success, 49 conflicts", evidence: "Measured" },
-        { label: "40 students into 10 seats", value: "exactly 10 enrolled, 30 refused", evidence: "Measured" },
-        { label: "Negative control, FOR UPDATE removed", value: "over-capacity — the race is real", evidence: "Measured" },
-        { label: "30 unlocked threads, constraint only", value: "1 row, 29 UniqueViolations", evidence: "Measured" },
-        { label: "12 concurrent HTTP enrollments, 2 seats", value: "2 × 201, 10 × 409", evidence: "Measured" },
-        { label: "8 workers, 8 queued jobs", value: "each job delivered exactly once", evidence: "Measured" },
-        { label: "Latency, 1 VU", value: "p50 2.20 ms", evidence: "Measured", note: "Single uvicorn worker, loopback, shared machine" },
-        { label: "Latency, 50 VUs", value: "p50 110 ms, throughput flat at ~430 rps", evidence: "Measured" },
-        { label: "Worker scaling", value: "1 → 409 rps, 2 → 811, 4 → 825, 8 → 824", evidence: "Measured" },
-        { label: "Per-endpoint ceiling", value: "/health 1373 rps, /api/auth/me 1004, /api/courses 839", evidence: "Measured", note: "Locates the plateau in per-request work, not worker count" },
-        { label: "Frontend bundle", value: "189 kB JS, 57 kB gzipped, clean under strict TypeScript", evidence: "Measured" },
-        { label: "Accepted risks", value: "10, listed with their fixes", evidence: "Measured" },
-      ],
-      challenges: [
-        {
-          title: "A schema check that looked obviously correct and was not",
-          body:
-            "Every \"content is present\" constraint was length(trim(content)) > 0. SQL's trim() strips only spaces, so a submission of newline-tab-space trimmed to length 2 and passed. All six \"not blank\" columns had the same flaw. It was found only because test_constraints.py writes raw SQL directly to PostgreSQL, bypassing Pydantic — going through the API would merely have proved the API checks the rule. The checks are now CHECK (x ~ '[^[:space:]]'), with one test covering all six columns, because a fix applied to one column and not its siblings is the usual outcome.",
-        },
-        {
-          title: "Diagnosing a throughput plateau in three stages",
-          body:
-            "Flat throughput with linearly growing latency indicated a single-threaded server, and adding a worker confirmed it: 409 to 811 rps. But 2 to 8 workers changed nothing, so the bottleneck had moved. Probing per endpoint located it in per-request work — /health reaches 1373 rps, /api/auth/me 1004, /api/courses 839 — and the largest single item is the actor lookup that makes revocation immediate. The honest conclusion is a tension rather than a fix: caching it with a TTL would turn a stale role into a privilege escalation.",
-        },
-        {
-          title: "A load test that measured the wrong thing entirely",
-          body:
-            "The first k6 script logged in on every iteration, so it was measuring scrypt at roughly 100 ms per hash and then tripping the login rate limiter — 96.83% of requests failed while 100% of the script's own checks passed. The fix was a per-VU token cache, and the bug is written into the file's comments rather than quietly corrected, because a load test that measures its own setup is a mistake worth recognising twice.",
-        },
-      ],
-      limitations: [
-        "Docker is written and reviewed but never built: the account is not in the docker group and sudo needs a password. Verified by docker ps returning permission denied on the daemon socket.",
-        "No CI.",
-        "A token cannot be revoked before its 30-minute expiry, though disabling an account is immediate.",
-        "Without Redis the rate limiter is per process and permits N× the limit across N instances — reported at /health rather than glossed over.",
-        "Offset pagination, capped at page 1000.",
-        "No timetabling — deliberately out of scope, since a shallow version would have diluted what is done properly.",
-        "No password reset, 2FA, file uploads or encryption at rest; recorded as accepted risks.",
-        "Load figures are loopback on a machine shared with unrelated simulation jobs, so they exclude network latency and are noisier than a dedicated host.",
-        "The frontend has no tests; it is typed and builds clean, but it is deliberately not a security boundary.",
-      ],
-    },
-  },
 ];
+
+// Notes-only research entry: kept separate from the five implemented repositories.
+projectRecords.push({
+  slug: "hardware-prefetcher",
+  name: "Hardware Prefetcher",
+  domain: "Computer Architecture · ChampSim",
+  question: "When does predicting a future memory access actually improve execution?",
+  tagline: "A hardware-prefetching design and evaluation direction: access streams, prediction, cache behavior, and a baseline that must be measured.",
+  built: "The supplied project notes identify ChampSim, C++, and Linux. Implementation source and experiment outputs are not available locally; this case study presents the research brief and conceptual evaluation flow.",
+  stack: [],
+  highlights: ["Conceptual access-stream walkthrough", "Baseline-first evaluation plan for IPC, MPKI, and traffic", "Implementation and measurements awaiting source evidence"],
+  headline: [{ label: "Performance evidence", value: "Not yet available", evidence: "Not yet measured" }],
+  complete: false,
+  statusNote: "Research brief only in this workspace. No verified predictor source, benchmark output, or repository link is supplied.",
+  detail: {
+    problem: "Demand misses stall execution while data travels through the memory hierarchy. A prefetcher tries to overlap that delay with useful work, but an incorrect or mistimed request can consume bandwidth and evict useful cache lines. The problem is deciding which future accesses are worth fetching, not merely producing more requests.",
+    approach: "The supplied notes name a ChampSim-based design and evaluation project. The intended comparison is a predictor against an explicit no-prefetch baseline under the same workload and measurement window. The precise predictor policy, trace set, and simulator configuration cannot be established without its source.",
+    stages: [{ label: "Traces", sub: "not supplied" }, { label: "ChampSim", sub: "configuration unverified" }, { label: "Predictor", sub: "policy unverified" }, { label: "Baseline comparison", sub: "planned" }, { label: "IPC / MPKI", sub: "not yet measured" }],
+    decisions: [],
+    results: [{ label: "IPC change", value: "No verified result", evidence: "Not yet measured" }, { label: "MPKI / traffic", value: "No verified result", evidence: "Not yet measured" }, { label: "Predictor overhead", value: "No verified result", evidence: "Not yet measured" }],
+    challenges: [],
+    limitations: ["No prefetcher source or tests are available in this workspace.", "No benchmark traces, baseline, warmup settings, ROI settings, or raw outputs are supplied.", "The equal-stride visual is explanatory, not a claim about the implemented predictor.", "No speedup, accuracy, coverage, or storage-cost result is claimed."],
+  },
+});
+
+export const projects: Project[] = projectRecords.map((project) => ({
+  ...project,
+  caseStudy: caseStudies[project.slug]!,
+}));

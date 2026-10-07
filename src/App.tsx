@@ -11,7 +11,7 @@ import { useDocumentMeta, useActiveSection } from "./lib/hooks";
 
 const HOME_TITLE = `${profile.name} — ${profile.headline}`;
 const HOME_DESCRIPTION =
-  "M.Tech CSE at IIT Jodhpur. Five engineering projects across systems (C++20), " +
+  "M.Tech CSE at IIT Jodhpur. Engineering case studies across systems (C++20), " +
   "computer architecture (gem5), machine learning, and production backends — with " +
   "every claim labelled by how it was measured.";
 
@@ -61,26 +61,40 @@ export function App() {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const behavior: ScrollBehavior = reduced ? "auto" : "smooth";
 
-    if (route.kind === "home" && route.anchor) {
+    if ((route.kind === "home" || route.kind === "project") && route.anchor) {
       // One frame, so the section exists before we look for it.
       const id = route.anchor;
       requestAnimationFrame(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior, block: "start" });
+        const target = document.getElementById(id);
+        target?.scrollIntoView({ behavior, block: "start" });
+        const heading = target?.querySelector<HTMLElement>("h2");
+        if (heading) {
+          heading.setAttribute("tabindex", "-1");
+          heading.focus({ preventScroll: true });
+        }
       });
       return;
     }
     window.scrollTo({ top: 0, behavior: "auto" });
+    if (route.kind === "project") {
+      requestAnimationFrame(() => document.querySelector<HTMLElement>(".detail__title")?.focus({ preventScroll: true }));
+    }
   }, [route]);
 
   return (
     <>
-      <a className="skip-link" href="#main">
+      <a className="skip-link" href="#main" onClick={(event) => {
+        event.preventDefault();
+        const main = document.getElementById("main");
+        main?.focus({ preventScroll: true });
+        main?.scrollIntoView({ behavior: "auto", block: "start" });
+      }}>
         Skip to content
       </a>
       <Header active={activeSection} />
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         {route.kind === "home" ? <Home /> : null}
-        {route.kind === "project" && project ? <ProjectDetail project={project} /> : null}
+        {route.kind === "project" && project ? <ProjectDetail key={project.slug} project={project} /> : null}
         {route.kind === "project" && !project ? (
           <NotFound path={`/projects/${route.slug}`} />
         ) : null}

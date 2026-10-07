@@ -27,7 +27,7 @@ function ProjectRow({ project, index }: { project: (typeof projects)[number]; in
       <div>
         <div className="project__head">
           <h3 className="project__name">
-            <a href={href.project(project.slug)}>{project.name}</a>
+            <a href={href.project(project.slug)} aria-label={`Explore ${project.name} case study`}>{project.name}</a>
           </h3>
           <span className="project__domain">{project.domain}</span>
         </div>
@@ -51,7 +51,7 @@ function ProjectRow({ project, index }: { project: (typeof projects)[number]; in
         ) : null}
 
         <p className="project__foot" aria-hidden="true">
-          {project.name} in depth <span>→</span>
+          Explore project <span>→</span>
         </p>
       </div>
 
@@ -73,8 +73,8 @@ export function Projects() {
       id="projects"
       index="01"
       eyebrow="Selected work"
-      title="Five projects"
-      lede="Each answers one question about what I can build. Every figure below carries its evidence label, and each project's own repository states what is unfinished."
+      title="Six case studies"
+      lede="Five source-backed projects and one research brief. Each explores a different engineering question, with recorded evidence and unfinished work stated explicitly."
     >
       <ol className="projects">
         {projects.map((project, index) => (

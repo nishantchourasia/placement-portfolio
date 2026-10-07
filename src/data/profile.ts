@@ -1,15 +1,4 @@
-/**
- * Identity and contact details.
- *
- * Only verified facts belong in this file. The repository this site documents
- * has no configured git remote, no LinkedIn reference and no committed resume
- * PDF, so those links are `null` rather than guessed. Every link-rendering
- * component skips a `null` href instead of emitting a dead button — a broken
- * link on a portfolio is worse than an absent one.
- *
- * To publish them, fill in the values below; the UI picks them up with no other
- * change.
- */
+/** Identity and contact links supplied by Nishant Chourasia. */
 
 export interface ProfileLink {
   label: string;
@@ -31,13 +20,14 @@ export const profile = {
     institution: "Indian Institute of Technology Jodhpur",
   },
   email: "m25cse020@iitj.ac.in",
+  personalEmail: "nishantchourasia33@gmail.com",
 } as const;
 
 export const links: ProfileLink[] = [
   { label: "Email", href: "mailto:m25cse020@iitj.ac.in" },
   { label: "GitHub", href: "https://github.com/nishantchourasia" },
-  { label: "LinkedIn", href: null, pending: "Not recorded in the repository" },
-  { label: "Resume", href: null, pending: "No resume PDF committed yet" },
+  { label: "LinkedIn", href: "https://linkedin.com/in/nishant-chourasia-5ab996173" },
+  { label: "Resume", href: "https://drive.google.com/file/d/1HM_WSw93RUGYu38w-sZ3_rYsF3xryFAF/view?usp=sharing" },
 ];
 
 /** The principle the whole repository is built on, quoted on the site. */
