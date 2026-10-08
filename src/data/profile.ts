@@ -27,7 +27,7 @@ export const links: ProfileLink[] = [
   { label: "Email", href: "mailto:m25cse020@iitj.ac.in" },
   { label: "GitHub", href: "https://github.com/nishantchourasia" },
   { label: "LinkedIn", href: "https://linkedin.com/in/nishant-chourasia-5ab996173" },
-  { label: "Resume", href: "https://drive.google.com/file/d/1HM_WSw93RUGYu38w-sZ3_rYsF3xryFAF/view?usp=sharing" },
+  { label: "Resume", href: "/Nishant_Chourasia_Premium_Resume.pdf" },
 ];
 
 /** The principle the whole repository is built on, quoted on the site. */
